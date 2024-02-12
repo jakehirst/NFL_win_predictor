@@ -70,15 +70,17 @@ def run_epoch(loader, model, is_training=True):
     avg_loss = total_loss / total_samples
     avg_accuracy = total_accuracy / total_samples
     
-    return avg_loss, avg_accuracy
-
+    if(is_training):
+        return avg_loss, avg_accuracy
+    else:
+        return avg_loss, avg_accuracy, outputs
 
 
 '''***************  now trying with real data  ***************'''
 # Load the arrays
-features = np.load('/Users/jakehirst/Desktop/sportsbetting/nfl/data/features.npy')
-labels = np.load('/Users/jakehirst/Desktop/sportsbetting/nfl/data/labels.npy')
-game_log = np.load('/Users/jakehirst/Desktop/sportsbetting/nfl/data/game_log.npy')
+features = np.load('/Users/jakehirst/Desktop/NFL_win_predictor/nfl/data/features_Stats_from_2002_thru_2024.npy')
+labels = np.load('/Users/jakehirst/Desktop/NFL_win_predictor/nfl/data/labels_Stats_from_2002_thru_2024.npy')
+game_log = np.load('/Users/jakehirst/Desktop/NFL_win_predictor/nfl/data/game_logStats_from_2002_thru_2024.npy')
 
 # Split the data so that the last 1000 games are in the test set
 test_size = 1000  # Define the size of the test set (just the last 1000 games of the dataset)
@@ -132,14 +134,55 @@ num_epochs = 100  # Adjust as needed
 # Main training loop
 for epoch in range(num_epochs):
     train_loss, train_accuracy = run_epoch(train_loader, model, is_training=True)
-    test_loss, test_accuracy = run_epoch(test_loader, model, is_training=False)
+    test_loss, test_accuracy, outputs = run_epoch(test_loader, model, is_training=False)
     
     print(f'Epoch [{epoch+1}/{num_epochs}], '
           f'Train Loss: {train_loss:.4f}, Train Accuracy: {train_accuracy:.4f}, '
           f'Test Loss: {test_loss:.4f}, Test Accuracy: {test_accuracy:.4f}')
 
 
+unsure_interval = (0.45, 0.55)
+total_correct = 0
+sure_and_correct = 0 #number of predictions that were sure, and correct
+unsure_and_correct = 0 #number of predictions that were unsure, and still correct
+total_predictions = 0 
+total_unsure = 0
+total_sure = 0
+correct = False
+unsure = True
+test_preds = model(features_test_tensor)
+for i in range(len(test_preds)):
+    output = test_preds[i].item()
+    true_result = labels_test[i]
+    
+    if(round(output) == true_result):
+        correct = True
+        total_correct += 1
+    else:
+        correct = False
+    
+    if(unsure_interval[0] < output < unsure_interval[1]): #then the model is unsure...
+        total_unsure += 1
+        if(correct):
+            unsure_and_correct += 1
+    else:  #then the model is sure...
+        total_sure += 1
+        if(correct):
+            sure_and_correct += 1 
+            
+    total_predictions += 1
+    
 
+    # if(i %2 == 0):
+    #     print(game_log_test[i])
+    #     print(output)
+    #     print('\n\n')
+    
+print(f'Accuracy of SURE predictions = {sure_and_correct / total_sure}')
+print(f'Accuracy of UNSURE predictions = {unsure_and_correct / total_unsure}')
+print(f'Total accuracy = {total_correct / total_predictions}')
+        
+print('here')
 
 
 '''example of how to run with dummy data'''

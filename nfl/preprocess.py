@@ -13,8 +13,10 @@ possetion time need to be turned into multiple columns or floats to be usable.
 def clean_data(raw_data_filepath):
     df = pd.read_excel(raw_data_filepath)
     # df = df.dropna() #have to get rid of nans rows for this to work.
-    column_means = df.mean(axis=0)
-    df.fillna(column_means, inplace=True) #replacing all nans with the mean of the column
+    
+    # #must replace NA's with column means
+    # column_means = df.mean(axis=0)
+    # df.fillna(column_means, inplace=True) #replacing all nans with the mean of the column
         
     #dictionary that contains all of the current column names as keys. Label is the two columns to replace it with.
     columns_with_dashes = {'3rd down efficiency': ['3rd down conv', '3rd down att'],
@@ -45,6 +47,7 @@ def clean_data(raw_data_filepath):
     #Delete the original time of possesion column
     new_df = new_df.drop(columns=['Possession'])
     
+
     #move the win column to the far right for convenience
     columns = [col for col in new_df.columns if col != 'Win(1) / Loss(0)']
     columns.append('Win(1) / Loss(0)')
@@ -62,6 +65,10 @@ def clean_data(raw_data_filepath):
     new_df['Opponent name'] = new_df['Opponent name'].replace(['Redskins', 'Commanders'], 'Washington')
     '''this section is genious'''
 
+    has_nans = new_df.isna().any().any()
+    if(has_nans):
+        print('THE DATAFRAME CONTAINS NANS')
+        return 0
     
     old_filename = raw_data_filepath.split('/')[-1]
     new_filename = old_filename.removesuffix('.xlsx') + '_cleaned.csv'
@@ -179,10 +186,9 @@ def batch_all_data_for_RNN(cleaned_data_filepath, n):
     return
 
 # raw_data_filepath = '/Users/jakehirst/Desktop/sportsbetting/nfl/data/Stats_from_2002_thru_2022.xlsx'
-raw_data_filepath = '/Users/jakehirst/Desktop/sportsbetting/nfl/data/Stats_from_2023_thru_2024.xlsx'
+raw_data_filepath = '/Users/jakehirst/Desktop/NFL_win_predictor/nfl/data/Stats_from_2002_thru_2024.xlsx'
 clean_data(raw_data_filepath)
 
-# cleaned_data_filepath = '/Users/jakehirst/Desktop/sportsbetting/nfl/data/Stats_from_2002_thru_2022_cleaned.csv'
-cleaned_data_filepath = '/Users/jakehirst/Desktop/sportsbetting/nfl/data/Stats_from_2023_thru_2024_cleaned.csv'
-
+# cleaned_data_filepath = '/Users/jakehirst/Desktop/sportsbetting/nfl/data/Stats_from_2002_thru_2024_cleaned.csv'
+cleaned_data_filepath = '/Users/jakehirst/Desktop/NFL_win_predictor/nfl/data/Stats_from_2002_thru_2024_cleaned.csv'
 batch_all_data_for_RNN(cleaned_data_filepath, 10)
